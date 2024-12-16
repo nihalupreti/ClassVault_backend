@@ -1,0 +1,262 @@
+{
+  "openapi": "3.0.3",
+  "servers": [
+    {
+      "url": "https://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "info": {
+    "title": "API Documentation for ClassVault",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message explaining the issue",
+            "example": "Authorization information is missing or invalid."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "Unique identifier for the user",
+            "example": "67555220c6282f0b6f858d6b"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the user",
+            "example": "Nihal Upreti"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user",
+            "example": "nihal.upreti@gmail.com"
+          }
+        }
+      },
+      "UserFetchedResponse": {
+        "type": "object",
+        "description": "Response for fetching a user",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "Unique identifier for the user"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user"
+          }
+        }
+      },
+      "UserCreatedResponse": {
+        "type": "object",
+        "description": "Response for creating a user",
+        "properties": {
+          "attendee": {
+            "$ref": "#/components/schemas/User"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success message",
+            "example": "User created successfully."
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Operations related to user management"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "summary": "Get the user details",
+        "description": "Retrieve details of the user associated with the provided JWT token",
+        "operationId": "getUserDetails",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User details fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserFetchedResponse"
+                },
+                "examples": {
+                  "UserFound": {
+                    "value": {
+                      "_id": "67555220c6282f0b6f858d6b",
+                      "name": "Nihal Upreti",
+                      "email": "nihal.upreti@gmail.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization information is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No user found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "NoUserFound": {
+                    "value": {
+                      "message": "Token has expired or tampered with."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "description": "Register a new user with the specified details",
+        "operationId": "createUser",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Details of the user to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Full name of the user",
+                    "example": "Justin Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user",
+                    "example": "justin.doe@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Password for the user"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCreatedResponse"
+                },
+                "examples": {
+                  "UserCreated": {
+                    "value": {
+                      "attendee": {
+                        "_id": "67555220c6282f0b6f858d6b",
+                        "name": "Justin Doe",
+                        "email": "justin.doe@example.com"
+                      },
+                      "message": "User created successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "BadRequest": {
+                    "value": {
+                      "message": "Bad request. Body is invalid."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization information is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
