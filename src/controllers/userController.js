@@ -21,27 +21,20 @@ exports.signinUser = async (req, res, next) => {
 };
 
 exports.signupUser = async (req, res, next) => {
-  const { fullName, enrolledIn, role, faculty, email, password } = req.body;
+  const { fullName, enrolledIn, faculty, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new ApiError(400, "Bad Request", "Email already in use.");
+      throw new ApiError(409, "conflict", "Email already in use.");
     }
 
-    let assignedRole = role;
-    if (!role) {
-      assignedRole = email.endsWith("@ncit.edu.np") ? "admin" : "student";
-    }
+    const role = /[0-9]{6}/.test(email) ? "student" : "teacher"; //if roll is present then the user is student
 
-    const currentYear = new Date().getFullYear();
-    if (enrolledIn < 2018 || enrolledIn > currentYear || !Number.isInteger(enrolledIn)) {
-      throw new ApiError(400, "Bad Request", "Invalid enrollment year.");
-    }
     const newUser = await User.create({
       fullName,
       enrolledIn,
-      role: assignedRole,
+      role,
       faculty,
       email,
       password,
@@ -50,7 +43,7 @@ exports.signupUser = async (req, res, next) => {
     const encryptedToken = signJwt({ userId: newUser._id });
     setCookie(res, encryptedToken);
 
-    sendSuccessResponse(res, 201, "User signed up successfully!");
+    sendSuccessResponse(res, 201, "User created successfully.");
   } catch (error) {
     next(error);
   }
