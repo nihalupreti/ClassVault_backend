@@ -107,9 +107,7 @@
             "BearerAuth": []
           }
         ],
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "responses": {
           "200": {
             "description": "User details fetched successfully",
@@ -159,98 +157,94 @@
           }
         }
       },
-      "post": {
-        "summary": "Create a new user",
-        "description": "Register a new user with the specified details",
-        "operationId": "createUser",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "description": "Details of the user to create",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Full name of the user",
-                    "example": "Justin Doe"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "description": "Email address of the user",
-                    "example": "justin.doe@example.com"
-                  },
-                  "password": {
-                    "type": "string",
-                    "format": "password",
-                    "description": "Password for the user"
-                  }
-                }
-              }
+      "/signin": {
+        "post": {
+          "summary": "Create a new user",
+          "description": "Register a new user with the specified details",
+          "operationId": "createUser",
+          "security": [
+            {
+              "BearerAuth": []
             }
-          }
-        },
-        "tags": [
-          "Users"
-        ],
-        "responses": {
-          "201": {
-            "description": "User created successfully",
+          ],
+          "requestBody": {
+            "description": "Details of the user to create",
+            "required": true,
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserCreatedResponse"
-                },
-                "examples": {
-                  "UserCreated": {
-                    "value": {
-                      "attendee": {
-                        "_id": "67555220c6282f0b6f858d6b",
-                        "name": "Justin Doe",
-                        "email": "justin.doe@example.com"
-                      },
-                      "message": "User created successfully"
+                  "type": "object",
+                  "required": ["name", "email", "password"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Full name of the user",
+                      "example": "Justin Doe"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "description": "Email address of the user",
+                      "example": "justin.doe@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "format": "password",
+                      "description": "Password for the user"
                     }
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                },
-                "examples": {
-                  "BadRequest": {
-                    "value": {
-                      "message": "Bad request. Body is invalid."
+          "tags": ["Users"],
+          "responses": {
+            "201": {
+              "description": "User created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserCreatedResponse"
+                  },
+                  "examples": {
+                    "UserCreated": {
+                      "value": {
+                        "attendee": {
+                          "_id": "67555220c6282f0b6f858d6b",
+                          "name": "Justin Doe",
+                          "email": "justin.doe@example.com"
+                        },
+                        "message": "User created successfully"
+                      }
                     }
                   }
                 }
               }
-            }
-          },
-          "401": {
-            "description": "Authorization information is missing or invalid",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "400": {
+              "description": "Bad request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "BadRequest": {
+                      "value": {
+                        "message": "Bad request. Body is invalid."
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Authorization information is missing or invalid",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
                 }
               }
             }
