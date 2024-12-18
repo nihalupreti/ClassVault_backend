@@ -16,7 +16,11 @@ const userSchema = new mongoose.Schema({
       message: "only integer allowed.",
     },
   },
+  timing: { type: String, enum: ["mrng", "day"] },
   role: { type: String, enum: ["admin", "student"] }, //TODO: automatically choose default value based on email.
+  batchEnrolled: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Batch" }],
+  },
   faculty: {
     type: String,
     enum: ["BCE", "BCA"], //TODO: More faculty to add
