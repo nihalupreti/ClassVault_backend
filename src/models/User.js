@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
       message: "only integer allowed.",
     },
   },
-  role: { type: String, enum: ["admin", "student"] }, //TODO: automatically choose default value based on email.
+  role: { type: String, enum: ["admin", "student", "teacher"] }, //TODO: automatically choose default value based on email.
   faculty: {
     type: String,
     enum: ["BCE", "BCA"], //TODO: More faculty to add
