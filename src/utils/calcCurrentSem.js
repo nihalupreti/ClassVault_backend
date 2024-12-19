@@ -22,4 +22,4 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
   return semester;
 };
 
-console.log(calcCurrentSem(2022, "fall"));
+module.exports = calcCurrentSem;

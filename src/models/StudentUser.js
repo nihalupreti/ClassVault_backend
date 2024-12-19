@@ -43,7 +43,7 @@ const studentUserSchema = new mongoose.Schema({
   },
 });
 
-studentUserSchema.pre("save", function (next) {
+studentUserSchema.pre("validate", function (next) {
   if (this.enrolledIn && this.enrolledIntake && this.faculty && this.timing) {
     this.semNumber = calcCurrentSem(this.enrolledIn, this.enrolledIntake);
     this.studentCode =
