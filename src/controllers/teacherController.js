@@ -1,5 +1,7 @@
 const Batch = require("../models/Batch");
-const User = require("../models/User");
+const User = require("../models/StudentUser");
+const calcCurrentSem = require("../utils/calcCurrentSem");
+const sendSuccessResponse = require("../utils/response");
 
 exports.registerCourse = async (req, res, next) => {
   const { courseName, timing, semester, faculty } = req.body; //timing refers to mrng or day and semester will be number(1-8)
@@ -15,9 +17,16 @@ exports.registerCourse = async (req, res, next) => {
       faculty,
       timing,
       subject,
-
-      //TODO: sync changes to the user.
     });
+    //enroll every student that matches this semester,faculty and timing field
+    const semNumber = `${faculty}-${semester}-${timing}`.toUpperCase();
+    // TODO: Use message queue to offload the syncing task to worker thread
+    const allAppropriateStudentUser = await User.updateMany(
+      { semNumber },
+      { batchEnrolled: createBatch._id }
+    );
+
+    sendSuccessResponse(res, 200, "", "Course Created successfully");
   } catch (error) {
     next(error);
   }

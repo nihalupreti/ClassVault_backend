@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/StudentUser");
 const ApiError = require("../utils/customError");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
@@ -14,7 +14,7 @@ exports.signinUser = async (req, res, next) => {
     }
     const encryptedToken = signJwt({ userId: isCredValid._id });
     setCookie(res, encryptedToken);
-    sendSuccessResponse(res, 200, "User Loggedin Successfully.");
+    sendSuccessResponse(res, 200, "", "User Loggedin Successfully.");
   } catch (error) {
     next(error);
   }

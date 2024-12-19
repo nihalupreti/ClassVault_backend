@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
+const calcCurrentSem = require("../utils/calcCurrentSem");
 
-const userSchema = new mongoose.Schema({
+const studentUserSchema = new mongoose.Schema({
   fullName: {
     type: String,
     required: true,
     trim: true,
   },
+  studentCode: { type: String, required: true }, //eg: BCA-1-MRNG
   enrolledIn: {
     type: Number,
     required: true,
@@ -16,15 +18,16 @@ const userSchema = new mongoose.Schema({
       message: "only integer allowed.",
     },
   },
+  enrolledIntake: { type: String, enum: ["fall", "spring"], required: true },
   timing: { type: String, enum: ["mrng", "day"] },
-  role: { type: String, enum: ["admin", "student"] }, //TODO: automatically choose default value based on email.
   batchEnrolled: {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Batch" }],
   },
+  semNumber: { type: Number, min: 1, max: 8, required: true },
   faculty: {
     type: String,
     enum: ["BCE", "BCA"], //TODO: More faculty to add
-    require: true,
+    required: true,
   },
   email: {
     type: String,
@@ -40,6 +43,15 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-const User = mongoose.model("User", userSchema);
+studentUserSchema.pre("save", function (next) {
+  if (this.enrolledIn && this.enrolledIntake && this.faculty && this.timing) {
+    this.semNumber = calcCurrentSem(this.enrolledIn, this.enrolledIntake);
+    this.studentCode =
+      `${this.faculty}-${this.semNumber}-${this.timing}`.toUpperCase();
+  }
+  next();
+});
+
+const User = mongoose.model("User", studentUserSchema);
 
 module.exports = User;
