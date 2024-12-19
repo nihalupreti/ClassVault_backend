@@ -52,6 +52,6 @@ studentUserSchema.pre("save", function (next) {
   next();
 });
 
-const User = mongoose.model("User", studentUserSchema);
+const StudentUser = mongoose.model("User", studentUserSchema);
 
-module.exports = User;
+module.exports = StudentUser;

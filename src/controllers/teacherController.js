@@ -1,6 +1,5 @@
 const Batch = require("../models/Batch");
-const User = require("../models/StudentUser");
-const calcCurrentSem = require("../utils/calcCurrentSem");
+const StudentUser = require("../models/StudentUser");
 const sendSuccessResponse = require("../utils/response");
 
 exports.registerCourse = async (req, res, next) => {
