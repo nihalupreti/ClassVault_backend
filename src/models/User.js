@@ -34,6 +34,18 @@ const userSchema = new mongoose.Schema({
     required: true,
     minLength: 8,
   },
+  syllabus: {
+    type: String,
+    required: function () {
+      return this.role === "teacher", "student"; 
+    },
+  },
+  course: {
+    type: String,
+    required: function () {
+      return this.role === "teacher", "student"; 
+    },
+  },
 });
 
 const User = mongoose.model("User", userSchema);
