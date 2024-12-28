@@ -1,4 +1,6 @@
-const User = require("../models/User");
+const argon2 = require("argon2");
+
+const StudentUser = require("../models/StudentUser");
 const ApiError = require("../utils/customError");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
@@ -9,49 +11,84 @@ exports.signinUser = async (req, res, next) => {
   const { email, password, role } = req.body;
 
   try {
-    const isCredValid = await User.findOne({
-        email,
-        role: role === "student" || role === "teacher" ? role : null, 
-    });
-
-    if (!isCredValid || isCredValid.password !== password) {
-        throw new ApiError(404, "Not found", "Invalid Credentials");
+    const existingUser = await StudentUser.findOne({ email });
+    if (!existingUser) {
+      throw new ApiError(
+        401,
+        "Invalid Credentials.",
+        "Provided email or password is incorrect."
+      );
     }
+    const isPasswordValid = await argon2.verify(
+      existingUser.password,
+      password
+    );
+    if (!isPasswordValid) {
+      throw new ApiError(
+        401,
+        "Invalid Credentials.",
+        "Provided email or password is incorrect."
+      );
+      const isCredValid = await User.findOne({
+        email,
+        role: role === "student" || role === "teacher" ? role : null,
+      });
 
-    const encryptedToken = signJwt({ userId: isCredValid._id });
-    setCookie(res, encryptedToken);
-    sendSuccessResponse(res, 200, role=== "teacher" ? "Teacher logged in!" : "User Loggedin Successfully.");
+      if (!isCredValid || isCredValid.password !== password) {
+        throw new ApiError(404, "Not found", "Invalid Credentials");
+      }
+
+      const encryptedToken = signJwt({ userId: existingUser._id });
+      setCookie(res, encryptedToken);
+      sendSuccessResponse(res, 200, role === "teacher" ? "Teacher logged in!" : "", "User Loggedin Successfully.");
+    }
   } catch (error) {
+    // Handles invalid hash or invalid password error
+    if (error.message && error.message.includes("argon2")) {
+      return next(
+        new ApiError(
+          401,
+          "Invalid Credentials.",
+          "Provided email or password is incorrect."
+        )
+      );
+    }
     next(error);
   }
 };
 
 exports.signupUser = async (req, res, next) => {
-  const { fullName, enrolledIn, faculty, email, password } = req.body;
+  const {
+    fullName,
+    enrolledIn,
+    enrolledIntake,
+    timing,
+    faculty,
+    email,
+    password,
+  } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await StudentUser.findOne({ email });
     if (existingUser) {
       throw new ApiError(409, "conflict", "Email already in use.");
     }
 
-    const role = /[0-9]{6}/.test(email) ? "student" : "teacher"; //if roll is present then the user is student
+    const hashedPassword = await argon2.hash(password);
 
-    const newUser = await User.create({
+    const newUser = new StudentUser({
       fullName,
-      enrolledIn: role === "student" ? enrolledIn : undefined,
+      enrolledIn,
+      role,
       faculty,
       email,
       password,
-      role,
-      syllabus: role === "teacher" ? syllabus : undefined,
-      course: role === "teacher" ? course : undefined,
     });
-
+    await newUser.save();
     const encryptedToken = signJwt({ userId: newUser._id });
     setCookie(res, encryptedToken);
 
-    sendSuccessResponse(res, 201, "User created successfully.");
+    sendSuccessResponse(res, 201, "", "User created successfully.");
   } catch (error) {
     next(error);
   }

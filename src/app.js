@@ -8,6 +8,10 @@ const openApiDoc = require("../docs/openapi.json");
 const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middlewares/error");
 const userRoutes = require("./routes/userRoute");
+const teacherRoutes = require("./routes/teacherRoute");
+
+const connectDB = require("./config/dbConnection");
+connectDB();
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173" }));
@@ -15,8 +19,9 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-//Different routes here.
+
 app.use("/api", userRoutes);
+app.use("/api/teacher", teacherRoutes);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
