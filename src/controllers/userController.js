@@ -1,57 +1,42 @@
 const argon2 = require("argon2");
-
 const StudentUser = require("../models/StudentUser");
+const TeacherUser = require("../models/TeacherUser");
 const ApiError = require("../utils/customError");
 const sendSuccessResponse = require("../utils/response");
-const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
-
 
 exports.signinUser = async (req, res, next) => {
   const { email, password, role } = req.body;
 
   try {
-    const existingUser = await StudentUser.findOne({ email });
+    if (role !== "student" && role !== "teacher") {
+      throw new ApiError(400, "Invalid Role", "Role must be 'student' or 'teacher'.");
+    }
+
+    // user based on role
+    const UserModel = role === "teacher" ? TeacherUser : StudentUser;
+    const existingUser = await UserModel.findOne({ email });
+
     if (!existingUser) {
-      throw new ApiError(
-        401,
-        "Invalid Credentials.",
-        "Provided email or password is incorrect."
-      );
+      throw new ApiError(401, "Invalid Credentials", "Provided email or password is incorrect.");
     }
-    const isPasswordValid = await argon2.verify(
-      existingUser.password,
-      password
-    );
+
+    const isPasswordValid = await argon2.verify(existingUser.password, password);
     if (!isPasswordValid) {
-      throw new ApiError(
-        401,
-        "Invalid Credentials.",
-        "Provided email or password is incorrect."
-      );
-      const isCredValid = await User.findOne({
-        email,
-        role: role === "student" || role === "teacher" ? role : null,
-      });
-
-      if (!isCredValid || isCredValid.password !== password) {
-        throw new ApiError(404, "Not found", "Invalid Credentials");
-      }
-
-      const encryptedToken = signJwt({ userId: existingUser._id });
-      setCookie(res, encryptedToken);
-      sendSuccessResponse(res, 200, role === "teacher" ? "Teacher logged in!" : "", "User Loggedin Successfully.");
+      throw new ApiError(401, "Invalid Credentials", "Provided email or password is incorrect.");
     }
+
+
+    const token = signJwt({
+      _id: existingUser._id,
+      role: role,
+    });
+
+
+    sendSuccessResponse(res, 200, token, "User logged in successfully.");
   } catch (error) {
-    // Handles invalid hash or invalid password error
     if (error.message && error.message.includes("argon2")) {
-      return next(
-        new ApiError(
-          401,
-          "Invalid Credentials.",
-          "Provided email or password is incorrect."
-        )
-      );
+      return next(new ApiError(401, "Invalid Credentials", "Provided email or password is incorrect."));
     }
     next(error);
   }
@@ -66,30 +51,46 @@ exports.signupUser = async (req, res, next) => {
     faculty,
     email,
     password,
+    role,
   } = req.body;
 
   try {
-    const existingUser = await StudentUser.findOne({ email });
-    if (existingUser) {
-      throw new ApiError(409, "conflict", "Email already in use.");
+
+    if (role !== "student" && role !== "teacher") {
+      throw new ApiError(400, "Invalid Role", "Role must be 'student' or 'teacher'.");
     }
+
+    const UserModel = role === "teacher" ? TeacherUser : StudentUser;
+    const existingUser = await UserModel.findOne({ email });  //mail check
+
+    if (existingUser) {
+      throw new ApiError(409, "Conflict", "Email already in use.");
+    }
+
 
     const hashedPassword = await argon2.hash(password);
 
-    const newUser = new StudentUser({
+    const newUser = new UserModel({
       fullName,
       enrolledIn,
-      role,
+      enrolledIntake,
+      timing,
       faculty,
       email,
-      password,
+      password: hashedPassword,
+      role,
     });
     await newUser.save();
-    const encryptedToken = signJwt({ userId: newUser._id });
-    setCookie(res, encryptedToken);
 
-    sendSuccessResponse(res, 201, "", "User created successfully.");
+    const token = signJwt({
+      _id: newUser._id,
+      role: role,
+    });
+
+
+    sendSuccessResponse(res, 201, token, "User created successfully.");
   } catch (error) {
     next(error);
   }
 };
+
