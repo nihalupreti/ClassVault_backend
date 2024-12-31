@@ -1,16 +1,16 @@
 const mongoose = require("mongoose");
 
 const batchSchema = mongoose.Schema({
-  Semester: { type: String, ref: "Semester" },
   faculty: {
-    type: String,
-    enum: ["BCE", "BCA"], //TODO: More faculty to add
+    type: [{ type: String, ref: "Semester" }], //eg: BCA-1-MRG, BCE-6-DAY. TODO: regex validation
     require: true,
   },
-  timing: { type: String, enum: ["mrng", "day"] },
   subject: {
-    courseName: { type: String },
+    courseName: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  },
+  files: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "File" }],
   },
 });
 

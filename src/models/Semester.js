@@ -14,7 +14,7 @@ const semesterSchema = new mongoose.Schema({
     enum: ["BCA", "BCE"],
   },
   subjectList: {
-    type: [String], // Array of subject names
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }], // Array of subject ids
     required: true,
   },
   createdAt: {
