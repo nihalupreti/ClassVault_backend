@@ -7,16 +7,18 @@ const helmet = require("helmet");
 const openApiDoc = require("../docs/openapi.json");
 const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middlewares/error");
-const userRoutes = require("./routes/userRoute");
+const userRoutes = require("./routes/userAuthRoute");
+const teacherRoutes = require("./routes/teacherRoute");
 
 const app = express();
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
 //Different routes here.
-app.use("/api", userRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/teacher", teacherRoutes);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
