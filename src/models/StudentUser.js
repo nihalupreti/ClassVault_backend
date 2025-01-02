@@ -41,6 +41,11 @@ const studentUserSchema = new mongoose.Schema({
     required: true,
     minLength: 8,
   },
+  role: {
+    type: String,
+    default: "student",
+    immutable: true,
+  },
 });
 
 studentUserSchema.pre("validate", function (next) {

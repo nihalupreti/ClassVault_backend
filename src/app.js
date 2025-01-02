@@ -7,7 +7,7 @@ const helmet = require("helmet");
 const openApiDoc = require("../docs/openapi.json");
 const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middlewares/error");
-const userRoutes = require("./routes/userRoute");
+const userRoutes = require("./routes/userAuthRoute");
 const teacherRoutes = require("./routes/teacherRoute");
 
 const app = express();

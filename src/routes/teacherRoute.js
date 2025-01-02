@@ -9,6 +9,6 @@ const upload = require("../config/fileupload");
 const router = express.Router();
 
 router.post("/register", auth, registerCourse);
-rotuer.post("/upload", uploadFile.any(), uploadFile);
+router.post("/upload", upload.any(), uploadFile);
 
 module.exports = router;
