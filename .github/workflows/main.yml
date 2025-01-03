@@ -53,5 +53,5 @@ jobs:
               docker stop my-app
               docker rm my-app
             fi
-            docker run -d --name my-app -p 8080:80 ${{ vars.DOCKER_USERNAME }}/classvault_bk:master
+            docker run -d --name my-app -p 3000:3000 --env-file .env ${{ vars.DOCKER_USERNAME }}/classvault_bk:master
           EOF
