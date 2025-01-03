@@ -7,11 +7,16 @@ const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
 
+const userModels = {
+  student: StudentUser,
+  teacher: TeacherUser,
+};
+
 exports.signinUser = async (req, res, next) => {
   const { email, password } = req.body;
-
+  const UserModel = userModels[req.userType];
   try {
-    const existingUser = await req.userType.findOne({ email });
+    const existingUser = await UserModel.findOne({ email });
     if (!existingUser) {
       throw new ApiError(
         401,
