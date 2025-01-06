@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const semesterSchema = new mongoose.Schema({
-  _id: { type: String, required: true, unique: true },
+  _id: { type: String },
   semesterNumber: {
     type: Number,
     required: true,
@@ -23,9 +23,9 @@ const semesterSchema = new mongoose.Schema({
   },
 });
 
-// Pre-save middleware to set the `key` automatically
+// Pre-save middleware to set the `id` automatically
 semesterSchema.pre("save", function (next) {
-  this.key = `${this.faculty}${this.semesterNumber}`; //BCA1, BCE2....
+  this._id = `${this.faculty}-${this.semesterNumber}`; //BCA-1, BCE-2....
   next();
 });
 

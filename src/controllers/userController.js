@@ -64,33 +64,6 @@ exports.signupUser = async (req, res, next) => {
   try {
     const hashedPassword = await argon2.hash(inputBody.password);
 
-    if (req.UserType === "student") {
-      const newUser = new StudentUser({
-        fullName,
-        enrolledIn,
-        faculty,
-        email,
-        password: hashedPassword,
-        enrolledIntake,
-        timing,
-      });
-      await newUser.save();
-    }
-    const encryptedToken = signJwt({ userId: newUser._id });
-    setCookie(res, encryptedToken);
-
-    sendSuccessResponse(res, 201, "", "User created successfully.");
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.signupUser = async (req, res, next) => {
-  const inputBody = req.body;
-
-  try {
-    const hashedPassword = await argon2.hash(inputBody.password);
-
     let newUser;
     if (req.userType === "student") {
       newUser = new StudentUser({
@@ -121,7 +94,12 @@ exports.signupUser = async (req, res, next) => {
     const encryptedToken = signJwt({ userId: newUser._id });
     setCookie(res, encryptedToken);
 
-    sendSuccessResponse(res, 201, null, "User created successfully.");
+    sendSuccessResponse(
+      res,
+      201,
+      { role: newUser.role },
+      "User created successfully."
+    );
   } catch (error) {
     next(error);
   }

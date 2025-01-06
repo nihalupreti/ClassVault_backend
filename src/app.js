@@ -13,7 +13,7 @@ const teacherRoutes = require("./routes/teacherRoute");
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? "https://class-vault-frontend.vercel.app" // Deployed environment
-    : "http://localhost:3000"; // Development environment
+    : "http://localhost:5173"; // Development environment
 const app = express();
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(helmet());
