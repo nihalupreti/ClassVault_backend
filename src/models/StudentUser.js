@@ -8,6 +8,7 @@ const studentUserSchema = new mongoose.Schema({
     trim: true,
   },
   studentCode: { type: String, required: true }, //eg: BCA-1-MRNG
+  studentCodeGeneral: { type: String, required: true }, //eg: BCA-1
   enrolledIn: {
     type: Number,
     required: true,
@@ -50,9 +51,10 @@ const studentUserSchema = new mongoose.Schema({
 
 studentUserSchema.pre("validate", function (next) {
   if (this.enrolledIn && this.enrolledIntake && this.faculty && this.timing) {
-    this.semNumber = calcCurrentSem(this.enrolledIn, this.enrolledIntake);
+    this.semNumber = 2; //calcCurrentSem(this.enrolledIn, this.enrolledIntake); TODO:calculated sem properly
     this.studentCode =
       `${this.faculty}-${this.semNumber}-${this.timing}`.toUpperCase();
+    this.studentCodeGeneral = `${this.faculty}-${this.semNumber}`.toUpperCase();
   }
   next();
 });

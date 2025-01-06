@@ -6,8 +6,8 @@ const batchSchema = mongoose.Schema({
     require: true,
   },
   subject: {
-    courseName: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" },
-    teacher: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    courseName: { type: String, ref: "Subject" },
+    teacher: { type: mongoose.Schema.Types.ObjectId, ref: "TeacherUser" },
   },
   files: {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: "File" }],
