@@ -1,21 +1,30 @@
 const calcCurrentSem = (enrolledYear, enrolledIntake) => {
+
   const date = new Date();
   const currentYear = date.getFullYear();
-  const currentMnt = date.getMonth() + 1;
+  const currentMonth = date.getMonth() + 1;
+
+
+  const currentSeason = currentMonth >= 3 && currentMonth <= 8 ? "spring" : "fall";
+
+
+  if (enrolledIntake !== "spring" && enrolledIntake !== "fall") {
+    throw new Error("Invalid enrolledIntake value.");
+  }
+
 
   let semester = 1;
+  let tempYear = enrolledYear;
   let tempSeason = enrolledIntake;
 
-  const currentSeason = currentMnt >= 3 && currentMnt <= 8 ? "fall" : "spring";
-
-  while (enrolledYear < currentYear || tempSeason !== currentSeason) {
+  while (tempYear < currentYear || tempSeason !== currentSeason) {
     semester++;
 
-    if (tempSeason === "fall") {
-      tempSeason = "spring";
-    } else {
+    if (tempSeason === "spring") {
       tempSeason = "fall";
-      enrolledYear++;
+    } else {
+      tempSeason = "spring";
+      tempYear++;
     }
   }
 
