@@ -3,6 +3,7 @@ const argon2 = require("argon2");
 const StudentUser = require("../models/StudentUser");
 const ApiError = require("../utils/customError");
 const TeacherUser = require("../models/TeacherUser");
+const Batch = require("../models/Batch");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
@@ -35,7 +36,10 @@ exports.signinUser = async (req, res, next) => {
         "Provided email or password is incorrect."
       );
     }
-    const encryptedToken = signJwt({ userId: existingUser._id });
+    const encryptedToken = signJwt({
+      userId: existingUser._id,
+      role: existingUser.role,
+    });
     setCookie(res, encryptedToken);
     sendSuccessResponse(
       res,
@@ -91,7 +95,7 @@ exports.signupUser = async (req, res, next) => {
 
     await newUser.save();
 
-    const encryptedToken = signJwt({ userId: newUser._id });
+    const encryptedToken = signJwt({ userId: newUser._id, role: newUser.role });
     setCookie(res, encryptedToken);
 
     sendSuccessResponse(
@@ -102,5 +106,63 @@ exports.signupUser = async (req, res, next) => {
     );
   } catch (error) {
     next(error);
+  }
+};
+
+exports.getUserCourses = async (req, res, next) => {
+  const { userId, role } = req.user;
+
+  try {
+    let responseData = [];
+
+    if (role === "admin") {
+      const teacher = await TeacherUser.findById(userId);
+      if (teacher) {
+        const appropriateBatch = await Batch.find({
+          "subject.teacher": userId,
+        }).populate({
+          path: "files",
+          select: "filePath",
+        });
+        console.log(appropriateBatch);
+        responseData = appropriateBatch.map((batch) => ({
+          courseName: batch.subject?.courseName || "No course name available",
+          teacherName: teacher.fullName,
+          fileUrl:
+            batch.files?.map((file) => file.filePath) || "No file available",
+        }));
+      }
+    } else if (role === "student") {
+      const student = await StudentUser.findById(userId);
+      if (student) {
+        const appropriateBatch = await Batch.find({
+          _id: { $in: student.batchEnrolled },
+        })
+          .populate({
+            path: "subject.teacher",
+            select: "fullName",
+          })
+          .populate({
+            path: "files",
+            select: "filePath",
+          });
+
+        responseData = appropriateBatch.map((batch) => ({
+          courseName: batch.subject?.courseName || "No course name available",
+          teacherName:
+            batch.subject?.teacher?.fullName || "No teacher name available",
+          fileUrl:
+            batch.files?.map((file) => file.filePath) || "No file available",
+        }));
+      }
+    }
+
+    if (responseData.length === 0) {
+      return sendSuccessResponse(res, 404, [], "No courses found");
+    }
+
+    sendSuccessResponse(res, 200, responseData, "Courses found");
+  } catch (err) {
+    next(err);
   }
 };
