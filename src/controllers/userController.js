@@ -102,6 +102,7 @@ exports.signupUser = async (req, res, next) => {
     sendSuccessResponse(
       res,
       201,
+
       { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
@@ -111,6 +112,7 @@ exports.signupUser = async (req, res, next) => {
     console.log("here", parsedFaculties);
 
     // await sendCourseMessage({ parsedFaculties, id: savedBatch._id });
+
   } catch (error) {
     next(error);
   }
@@ -131,6 +133,7 @@ exports.getUserCourses = async (req, res, next) => {
           path: "files",
           select: "filePath",
         });
+
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
           teacherName: teacher.fullName,
@@ -165,6 +168,7 @@ exports.getUserCourses = async (req, res, next) => {
 
     if (responseData.length === 0) {
       return sendSuccessResponse(res, 200, [], "No courses found");
+
     }
 
     sendSuccessResponse(res, 200, responseData, "Courses found");
@@ -172,6 +176,7 @@ exports.getUserCourses = async (req, res, next) => {
     next(err);
   }
 };
+
 
 exports.getUserInfo = async (req, res, next) => {
   if (req.user.role === "admin") {
@@ -200,3 +205,4 @@ exports.logoutUser = async (req, res, next) => {
 
   return res.status(200).json({ message: "Logged out successfully" });
 };
+
