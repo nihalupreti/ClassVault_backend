@@ -4,10 +4,11 @@ const Subject = require("../models/Subject");
 const Semester = require("../models/Semester");
 const sendSuccessResponse = require("../utils/response");
 const File = require("../models/File");
+const sendCourseMessage = require("../producer/courseEnrollerProducer");
 
 exports.registerCourse = async (req, res, next) => {
   const { courseName, faculties } = req.body;
-  console.log(faculties);
+  const facultiesArr = JSON.parse(faculties);
   // TODO: Input validation here
   const teacherId = req.user.userId;
 
@@ -27,23 +28,17 @@ exports.registerCourse = async (req, res, next) => {
 
       const insertedFile = await File.insertMany(filesData);
       const fileIdArray = insertedFile.map((doc) => doc._id);
-      console.log(fileIdArray);
       const subject = {
         courseName,
         teacher: teacherId,
       };
       const createBatch = new Batch({
-        faculty: faculties,
+        faculty: facultiesArr,
         subject,
         files: fileIdArray,
       });
       const savedBatch = await createBatch.save();
-      const parsedFaculties = JSON.parse(faculties);
-      // TODO: Process files asynchronously (e.g., using a message queue)
-      const students = await StudentUser.updateMany(
-        { studentCodeGeneral: { $in: parsedFaculties } },
-        { $set: { batchEnrolled: savedBatch._id } }
-      );
+      await sendCourseMessage({ facultiesArr, id: savedBatch._id });
     }
 
     sendSuccessResponse(
