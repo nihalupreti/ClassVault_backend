@@ -47,6 +47,9 @@ const studentUserSchema = new mongoose.Schema({
     default: "student",
     immutable: true,
   },
+  groups: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+  },
 });
 
 studentUserSchema.pre("validate", function (next) {
