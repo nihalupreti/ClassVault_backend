@@ -7,7 +7,6 @@ const Batch = require("../models/Batch");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
-const sendCourseMessage = require("../producer/courseEnrollerProducer");
 
 const userModels = {
   student: StudentUser,
@@ -99,18 +98,24 @@ exports.signupUser = async (req, res, next) => {
     const encryptedToken = signJwt({ userId: newUser._id, role: newUser.role });
     setCookie(res, encryptedToken);
 
+    if (req.userType === "student") {
+      const studentCodeGeneral = newUser.studentCodeGeneral;
+      const batches = await Batch.find({
+        faculty: { $in: studentCodeGeneral },
+      });
+
+      const batchIds = batches.map((batch) => batch._id);
+
+      newUser.batchEnrolled = batchIds;
+      await newUser.save();
+    }
+
     sendSuccessResponse(
       res,
       201,
       { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
-
-    const studentCodeGeneral = newUser.studentCodeGeneral;
-    const parsedFaculties = await Batch.find();
-    console.log("here", parsedFaculties);
-
-    // await sendCourseMessage({ parsedFaculties, id: savedBatch._id });
   } catch (error) {
     next(error);
   }
@@ -134,8 +139,7 @@ exports.getUserCourses = async (req, res, next) => {
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
           teacherName: teacher.fullName,
-          fileUrl:
-            batch.files?.map((file) => file.filePath) || "No file available",
+          id: batch?._id || "No id found",
         }));
       }
     } else if (role === "student") {
@@ -157,8 +161,7 @@ exports.getUserCourses = async (req, res, next) => {
           courseName: batch.subject?.courseName || "No course name available",
           teacherName:
             batch.subject?.teacher?.fullName || "No teacher name available",
-          fileUrl:
-            batch.files?.map((file) => file.filePath) || "No file available",
+          id: batch?._id || "No id found",
         }));
       }
     }
