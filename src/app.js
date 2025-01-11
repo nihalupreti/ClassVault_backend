@@ -9,6 +9,7 @@ const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middlewares/error");
 const userRoutes = require("./routes/userAuthRoute");
 const teacherRoutes = require("./routes/teacherRoute");
+const assignmentRoute = require('./routes/assignmentRoute');
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
@@ -23,6 +24,7 @@ app.use(cookieParser());
 //Different routes here.
 app.use("/api/user", userRoutes);
 app.use("/api/teacher", teacherRoutes);
+app.use('/api/assignments', assignmentRoute);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
