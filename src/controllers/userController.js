@@ -7,7 +7,8 @@ const Batch = require("../models/Batch");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
-const calcCurrentSem = require("../utils/calcCurrentSem");
+const sendCourseMessage = require("../producer/courseEnrollerProducer");
+
 
 const userModels = {
   student: StudentUser,
@@ -45,7 +46,7 @@ exports.signinUser = async (req, res, next) => {
     sendSuccessResponse(
       res,
       200,
-      { role: existingUser.role },
+      { role: existingUser.role, fullName: existingUser.fullName },
       "User Loggedin Successfully."
     );
   } catch (error) {
@@ -107,10 +108,107 @@ exports.signupUser = async (req, res, next) => {
     sendSuccessResponse(
       res,
       201,
-      { role: newUser.role },
+
+      { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
+
+    const studentCodeGeneral = newUser.studentCodeGeneral;
+    const parsedFaculties = await Batch.find();
+    console.log("here", parsedFaculties);
+
+    // await sendCourseMessage({ parsedFaculties, id: savedBatch._id });
+
   } catch (error) {
     next(error);
   }
 };
+
+exports.getUserCourses = async (req, res, next) => {
+  const { userId, role } = req.user;
+
+  try {
+    let responseData = [];
+
+    if (role === "admin") {
+      const teacher = await TeacherUser.findById(userId);
+      if (teacher) {
+        const appropriateBatch = await Batch.find({
+          "subject.teacher": userId,
+        }).populate({
+          path: "files",
+          select: "filePath",
+        });
+
+        responseData = appropriateBatch.map((batch) => ({
+          courseName: batch.subject?.courseName || "No course name available",
+          teacherName: teacher.fullName,
+          fileUrl:
+            batch.files?.map((file) => file.filePath) || "No file available",
+        }));
+      }
+    } else if (role === "student") {
+      const student = await StudentUser.findById(userId);
+      if (student) {
+        const appropriateBatch = await Batch.find({
+          _id: { $in: student.batchEnrolled },
+        })
+          .populate({
+            path: "subject.teacher",
+            select: "fullName",
+          })
+          .populate({
+            path: "files",
+            select: "filePath",
+          });
+
+        responseData = appropriateBatch.map((batch) => ({
+          courseName: batch.subject?.courseName || "No course name available",
+          teacherName:
+            batch.subject?.teacher?.fullName || "No teacher name available",
+          fileUrl:
+            batch.files?.map((file) => file.filePath) || "No file available",
+        }));
+      }
+    }
+
+    if (responseData.length === 0) {
+      return sendSuccessResponse(res, 200, [], "No courses found");
+
+    }
+
+    sendSuccessResponse(res, 200, responseData, "Courses found");
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+exports.getUserInfo = async (req, res, next) => {
+  if (req.user.role === "admin") {
+    const teacher = await TeacherUser.findById(req.user.userId);
+    if (teacher)
+      sendSuccessResponse(res, 200, {
+        fullName: teacher.fullName,
+        role: teacher.role,
+      });
+  } else if (req.user.role === "student") {
+    const student = await StudentUser.findById(req.user.userId);
+    if (student)
+      sendSuccessResponse(res, 200, {
+        fullName: student.fullName,
+        role: student.role,
+      });
+  }
+};
+
+exports.logoutUser = async (req, res, next) => {
+  res.clearCookie("authToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+  });
+
+  return res.status(200).json({ message: "Logged out successfully" });
+};
+
