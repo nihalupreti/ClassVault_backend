@@ -27,9 +27,6 @@ const studentUserSchema = new mongoose.Schema({
     required: true,
   },
 
-  groups: {
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
-  },
   role: { type: String, default: "student", immutable: true },
 });
 

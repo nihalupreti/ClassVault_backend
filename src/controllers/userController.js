@@ -7,6 +7,7 @@ const Batch = require("../models/Batch");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
+const User = require("../models/User");
 
 const userModels = {
   student: StudentUser,
@@ -113,6 +114,7 @@ exports.signupUser = async (req, res, next) => {
     sendSuccessResponse(
       res,
       201,
+
       { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
@@ -136,6 +138,7 @@ exports.getUserCourses = async (req, res, next) => {
           path: "files",
           select: "filePath",
         });
+
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
           teacherName: teacher.fullName,
@@ -177,21 +180,12 @@ exports.getUserCourses = async (req, res, next) => {
 };
 
 exports.getUserInfo = async (req, res, next) => {
-  if (req.user.role === "admin") {
-    const teacher = await TeacherUser.findById(req.user.userId);
-    if (teacher)
-      sendSuccessResponse(res, 200, {
-        fullName: teacher.fullName,
-        role: teacher.role,
-      });
-  } else if (req.user.role === "student") {
-    const student = await StudentUser.findById(req.user.userId);
-    if (student)
-      sendSuccessResponse(res, 200, {
-        fullName: student.fullName,
-        role: student.role,
-      });
-  }
+  const user = await User.findById(req.user.userId);
+  sendSuccessResponse(res, 200, {
+    fullName: user.fullName,
+    role: user.role,
+    groups: user.groups,
+  });
 };
 
 exports.logoutUser = async (req, res, next) => {

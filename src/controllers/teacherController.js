@@ -9,6 +9,7 @@ const sendCourseMessage = require("../producer/courseEnrollerProducer");
 exports.registerCourse = async (req, res, next) => {
   const { courseName, faculties } = req.body;
   const facultiesArr = JSON.parse(faculties);
+
   // TODO: Input validation here
   const teacherId = req.user.userId;
 
@@ -28,12 +29,14 @@ exports.registerCourse = async (req, res, next) => {
 
       const insertedFile = await File.insertMany(filesData);
       const fileIdArray = insertedFile.map((doc) => doc._id);
+
       const subject = {
         courseName,
         teacher: teacherId,
       };
       const createBatch = new Batch({
         faculty: facultiesArr,
+
         subject,
         files: fileIdArray,
       });

@@ -3,7 +3,11 @@ const { applyTimestamps } = require("./StudentUser");
 
 const questionSchema = mongoose.Schema(
   {
-    course: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" },
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
+      required: true,
+    },
     question: {
       type: String,
       required: true,

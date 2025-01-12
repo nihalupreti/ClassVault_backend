@@ -3,7 +3,8 @@ const Questions = require("../models/Question");
 const sendSuccessResponse = require("../utils/response");
 
 exports.getAllQuestions = async (req, res, next) => {
-  const questions = await Questions.find();
+  const { course: courseId } = req.query;
+  const questions = await Questions.find({ course: courseId });
   const questionsArr = questions.map((question) => {
     return { question: question.question, id: question._id };
   });
@@ -24,13 +25,12 @@ exports.getAnswer = async (req, res, next) => {
   try {
     const { question: questionId } = req.query;
 
-    const answers = await Answers.find({ question: questionId }).populate(
-      "user"
-    );
+    const answers = await Answers.find({ question: questionId })
+      .populate("user")
+      .populate("question");
 
     const response = answers.map((answer) => ({
       id: answer._id,
-
       author: {
         name: answer.user.fullName,
       },
