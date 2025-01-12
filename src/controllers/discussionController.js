@@ -13,25 +13,57 @@ exports.getAllQuestions = async (req, res, next) => {
 
 exports.addQuestion = async (req, res, next) => {
   const { question: userQuestion } = req.body;
+  const { id: batchId } = req.params;
 
-  const question = new Questions({ question: userQuestion });
+  const question = new Questions({ question: userQuestion, course: batchId });
   question.save();
   sendSuccessResponse(res, 201, {}, "question created");
 };
 
 exports.getAnswer = async (req, res, next) => {
-  const { id: questionId } = req.param;
-  const answers = await Answers.find({ question: questionId });
-  const response = answers.map((answer, user) => ({ answer, user }));
-  sendSuccessResponse(res, 200, response, "All questions");
+  try {
+    const { question: questionId } = req.query;
+
+    const answers = await Answers.find({ question: questionId }).populate(
+      "user"
+    );
+
+    const response = answers.map((answer) => ({
+      id: answer._id,
+
+      author: {
+        name: answer.user.fullName,
+      },
+      content: answer.answer,
+      created_at: answer.createdAt,
+      // replies: (answer.replies || []).map((reply) => ({
+      //   id: reply._id,
+      //   author: {
+      //     name: reply.user.name,
+      //   },
+      //   content: reply.answer,
+      //   created_at: reply.createdAt,
+      // })),
+    }));
+
+    sendSuccessResponse(
+      res,
+      200,
+      response,
+      "All answers retrieved successfully"
+    );
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.postAnswer = async (req, res, next) => {
-  const { id: questionId } = req.param;
+  const { question: questionId } = req.query;
   const { answer } = req.body;
+
   const saveAnswer = new Answers({
     question: questionId,
-    user: req.user.UserId,
+    user: req.user.userId,
     answer,
   });
   saveAnswer.save();

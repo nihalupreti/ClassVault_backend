@@ -94,7 +94,7 @@ exports.signupUser = async (req, res, next) => {
     }
 
     await newUser.save();
-
+    console.log(newUser);
     const encryptedToken = signJwt({ userId: newUser._id, role: newUser.role });
     setCookie(res, encryptedToken);
 

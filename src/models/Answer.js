@@ -1,15 +1,16 @@
 const mongoose = require("mongoose");
-const StudentUser = require("./StudentUser");
 
 const answerSchema = mongoose.Schema(
   {
     question: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Question",
+      required: true,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "StudentUser",
+      ref: "User",
+      required: true,
     },
     answer: {
       type: String,

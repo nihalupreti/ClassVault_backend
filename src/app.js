@@ -11,6 +11,8 @@ const userRoutes = require("./routes/userAuthRoute");
 const teacherRoutes = require("./routes/teacherRoute");
 const groupRoutes = require("./routes/groupRoutes");
 const discussionRoutes = require("./routes/discussionRoutes");
+const fileRoutes = require("./routes/fileRoutes");
+const resourceRoutes = require("./routes/resourceRoutes");
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
@@ -18,7 +20,12 @@ const allowedOrigins =
     : "http://localhost:5173"; // Development environment
 const app = express();
 app.use(cors({ origin: allowedOrigins, credentials: true }));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // TODO: just for development properly configure it later
+    frameguard: false,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -27,6 +34,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/discussion", discussionRoutes);
+app.use("/api", fileRoutes);
+app.use("/api/course", resourceRoutes);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
 

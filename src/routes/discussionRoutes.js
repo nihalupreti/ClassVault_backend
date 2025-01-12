@@ -10,8 +10,8 @@ const auth = require("../middlewares/auth");
 const router = express.Router();
 
 router.get("/question", getAllQuestions);
-router.post("/question", addQuestion);
-router.get("/answer/:id", getAnswer);
-router.post("/answer/:id", auth, postAnswer);
+router.post("/question/:id", addQuestion);
+router.get("/answer", getAnswer); ///answer?course=123&question=456
+router.post("/answer", auth, postAnswer);
 
 module.exports = router;
