@@ -13,7 +13,13 @@ exports.createGroup = async (req, res, next) => {
       groupAdmin: req.user.userId,
     });
     const savedGroup = await createGroup.save();
-
+    if (savedGroup) {
+      const teacher = await TeacherUser.findByIdAndUpdate(
+        req.user.userId,
+        { $push: { groups: savedGroup._id } },
+        { new: true }
+      );
+    }
     sendSuccessResponse(res, 201, {}, "Succesfully created group");
   } catch (err) {
     next(err);

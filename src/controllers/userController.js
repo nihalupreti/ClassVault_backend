@@ -7,7 +7,7 @@ const Batch = require("../models/Batch");
 const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
-const sendCourseMessage = require("../producer/courseEnrollerProducer");
+const User = require("../models/User");
 
 const userModels = {
   student: StudentUser,
@@ -95,9 +95,21 @@ exports.signupUser = async (req, res, next) => {
     }
 
     await newUser.save();
-
+    console.log(newUser);
     const encryptedToken = signJwt({ userId: newUser._id, role: newUser.role });
     setCookie(res, encryptedToken);
+
+    if (req.userType === "student") {
+      const studentCodeGeneral = newUser.studentCodeGeneral;
+      const batches = await Batch.find({
+        faculty: { $in: studentCodeGeneral },
+      });
+
+      const batchIds = batches.map((batch) => batch._id);
+
+      newUser.batchEnrolled = batchIds;
+      await newUser.save();
+    }
 
     sendSuccessResponse(
       res,
@@ -106,13 +118,6 @@ exports.signupUser = async (req, res, next) => {
       { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
-
-    const studentCodeGeneral = newUser.studentCodeGeneral;
-    const parsedFaculties = await Batch.find();
-    console.log("here", parsedFaculties);
-
-    // await sendCourseMessage({ parsedFaculties, id: savedBatch._id });
-
   } catch (error) {
     next(error);
   }
@@ -137,8 +142,7 @@ exports.getUserCourses = async (req, res, next) => {
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
           teacherName: teacher.fullName,
-          fileUrl:
-            batch.files?.map((file) => file.filePath) || "No file available",
+          id: batch?._id || "No id found",
         }));
       }
     } else if (role === "student") {
@@ -160,15 +164,13 @@ exports.getUserCourses = async (req, res, next) => {
           courseName: batch.subject?.courseName || "No course name available",
           teacherName:
             batch.subject?.teacher?.fullName || "No teacher name available",
-          fileUrl:
-            batch.files?.map((file) => file.filePath) || "No file available",
+          id: batch?._id || "No id found",
         }));
       }
     }
 
     if (responseData.length === 0) {
       return sendSuccessResponse(res, 200, [], "No courses found");
-
     }
 
     sendSuccessResponse(res, 200, responseData, "Courses found");
@@ -177,23 +179,13 @@ exports.getUserCourses = async (req, res, next) => {
   }
 };
 
-
 exports.getUserInfo = async (req, res, next) => {
-  if (req.user.role === "admin") {
-    const teacher = await TeacherUser.findById(req.user.userId);
-    if (teacher)
-      sendSuccessResponse(res, 200, {
-        fullName: teacher.fullName,
-        role: teacher.role,
-      });
-  } else if (req.user.role === "student") {
-    const student = await StudentUser.findById(req.user.userId);
-    if (student)
-      sendSuccessResponse(res, 200, {
-        fullName: student.fullName,
-        role: student.role,
-      });
-  }
+  const user = await User.findById(req.user.userId);
+  sendSuccessResponse(res, 200, {
+    fullName: user.fullName,
+    role: user.role,
+    groups: user.groups,
+  });
 };
 
 exports.logoutUser = async (req, res, next) => {
@@ -205,4 +197,3 @@ exports.logoutUser = async (req, res, next) => {
 
   return res.status(200).json({ message: "Logged out successfully" });
 };
-

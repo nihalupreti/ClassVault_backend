@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
-const User = require("./User");
 
-const teacherUserSchema = new mongoose.Schema({
+const userSchema = mongoose.Schema({
   fullName: {
     type: String,
     required: true,
@@ -19,9 +18,10 @@ const teacherUserSchema = new mongoose.Schema({
     required: true,
     minLength: 8,
   },
-  role: { type: String, default: "admin", immutable: true },
+  groups: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+  },
 });
 
-const TeacherUser = User.discriminator("TeacherUser", teacherUserSchema);
-
-module.exports = TeacherUser;
+const User = mongoose.model("User", userSchema);
+module.exports = User;
