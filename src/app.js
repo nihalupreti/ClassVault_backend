@@ -32,10 +32,12 @@ app.use(cookieParser());
 //Different routes here.
 app.use("/api/user", userRoutes);
 app.use("/api/teacher", teacherRoutes);
+
 app.use("/api/group", groupRoutes);
 app.use("/api/discussion", discussionRoutes);
 app.use("/api", fileRoutes);
 app.use("/api/course", resourceRoutes);
+
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
 

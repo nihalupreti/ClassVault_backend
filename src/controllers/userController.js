@@ -9,6 +9,7 @@ const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
 const User = require("../models/User");
 
+
 const userModels = {
   student: StudentUser,
   teacher: TeacherUser,
@@ -71,6 +72,9 @@ exports.signupUser = async (req, res, next) => {
 
     let newUser;
     if (req.userType === "student") {
+
+      const currentSemester = calcCurrentSem(inputBody.enrolledIn, inputBody.enrolledIntake);
+
       newUser = new StudentUser({
         fullName: inputBody.fullName,
         enrolledIn: inputBody.enrolledIn,
@@ -79,8 +83,10 @@ exports.signupUser = async (req, res, next) => {
         password: hashedPassword,
         enrolledIntake: inputBody.enrolledIntake,
         timing: inputBody.timing,
+        currentSemester: currentSemester, //sem calculation
       });
-    } else if (req.userType === "teacher") {
+    }
+    else if (req.userType === "teacher") {
       newUser = new TeacherUser({
         fullName: inputBody.fullName,
         email: inputBody.email,
