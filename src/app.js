@@ -10,6 +10,7 @@ const errorHandler = require("./middlewares/error");
 const userRoutes = require("./routes/userAuthRoute");
 const teacherRoutes = require("./routes/teacherRoute");
 const groupRoutes = require("./routes/groupRoutes");
+const assignmentRoutes = require("./routes/assignmentRoute");
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
@@ -26,6 +27,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/teacher", teacherRoutes);
 
 app.use("/api/group", groupRoutes);
+app.use("/api/assignments", assignmentRoutes);
 
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDoc));
