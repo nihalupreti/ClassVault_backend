@@ -86,6 +86,29 @@ exports.getAppropriateSemesters = async (req, res, next) => {
   }
 };
 
+exports.gradeAssignment = async (req, res, next) => {
+  const { assignmentId, score, feedback } = req.body;
+
+  if (!assignmentId || score === undefined || feedback === undefined) {
+    return res.status(400).json({ message: "Assignment ID, score, and feedback are required." });
+  }
+
+  try {
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found." });
+    }
+
+    assignment.grade = { score, feedback };
+    const updatedAssignment = await assignment.save();
+
+    sendSuccessResponse(res, 200, updatedAssignment, "Assignment graded successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 // exports.uploadFile = async (req, res, next) => {
 //   try {
 //     if (!req.files || req.files.length === 0) {

@@ -28,7 +28,7 @@ exports.uploadAssignment = async (req, res, next) => {
         const newAssignment = new Assignment({
             student_id,
             assignment_title,
-            files: fileIdArray, // Assign uploaded file IDs
+            files: fileIdArray,
             submitted_at: Date.now(),
         });
 
