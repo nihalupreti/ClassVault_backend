@@ -1,4 +1,5 @@
 const argon2 = require("argon2");
+const path = require("path");
 
 const StudentUser = require("../models/StudentUser");
 const ApiError = require("../utils/customError");
@@ -8,6 +9,9 @@ const sendSuccessResponse = require("../utils/response");
 const setCookie = require("../utils/cookie");
 const { signJwt } = require("../utils/jwt");
 const User = require("../models/User");
+const formatDate = require("../utils/formatDate");
+const elasticClient = require("../config/elasticSearch");
+const highlightExcerpt = require("../utils/highlightDescription");
 
 const userModels = {
   student: StudentUser,
@@ -134,15 +138,14 @@ exports.getUserCourses = async (req, res, next) => {
       if (teacher) {
         const appropriateBatch = await Batch.find({
           "subject.teacher": userId,
-        }).populate({
-          path: "files",
-          select: "filePath",
         });
 
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
+          description: batch.description,
           teacherName: teacher.fullName,
           id: batch?._id || "No id found",
+          updatedAt: formatDate(batch.updatedAt),
         }));
       }
     } else if (role === "student") {
@@ -150,21 +153,18 @@ exports.getUserCourses = async (req, res, next) => {
       if (student) {
         const appropriateBatch = await Batch.find({
           _id: { $in: student.batchEnrolled },
-        })
-          .populate({
-            path: "subject.teacher",
-            select: "fullName",
-          })
-          .populate({
-            path: "files",
-            select: "filePath",
-          });
+        }).populate({
+          path: "subject.teacher",
+          select: "fullName",
+        });
 
         responseData = appropriateBatch.map((batch) => ({
           courseName: batch.subject?.courseName || "No course name available",
+          description: batch.description,
           teacherName:
             batch.subject?.teacher?.fullName || "No teacher name available",
           id: batch?._id || "No id found",
+          updatedAt: formatDate(batch.updatedAt),
         }));
       }
     }
@@ -196,4 +196,68 @@ exports.logoutUser = async (req, res, next) => {
   });
 
   return res.status(200).json({ message: "Logged out successfully" });
+};
+
+exports.search = async (req, res, next) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+
+    const userId = req.user.userId;
+    const student = await StudentUser.findById(userId);
+    if (!student || !student.batchEnrolled?.length) {
+      return res.status(404).json({ error: "No enrolled batches found" });
+    }
+
+    // Get all batches in a single query
+    const batches = await Batch.find(
+      { _id: { $in: student.batchEnrolled } },
+      { files: 1 }
+    ).populate("files", "filePath");
+
+    const flattenedFilePaths = batches
+      .flatMap((batch) => batch.files?.map((file) => file.filePath) || [])
+      .filter(Boolean);
+
+    if (!flattenedFilePaths.length) {
+      return res
+        .status(404)
+        .json({ error: "No files found in enrolled batches" });
+    }
+    const response = await elasticClient.search({
+      index: "pdf",
+      body: {
+        query: {
+          bool: {
+            must: [
+              {
+                terms: {
+                  pdfPath: flattenedFilePaths,
+                },
+              },
+              {
+                match_phrase: {
+                  content: query,
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+    httpResponse = response.hits.hits.map((doc) => ({
+      fileId: doc._source.pdfId,
+      page: doc._source.page,
+      fileName: path.basename(doc._source.pdfPath),
+      description: highlightExcerpt(doc._source.content, query),
+    }));
+    res.status(200).json(httpResponse);
+  } catch (error) {
+    console.error("Error during search:", error);
+    res.status(500).json({
+      error: "An error occurred while processing the search request.",
+    });
+  }
 };

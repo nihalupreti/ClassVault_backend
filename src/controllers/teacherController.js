@@ -1,14 +1,16 @@
 const Batch = require("../models/Batch");
-const StudentUser = require("../models/StudentUser");
+const path = require("path");
 const Subject = require("../models/Subject");
 const Semester = require("../models/Semester");
 const sendSuccessResponse = require("../utils/response");
 const File = require("../models/File");
-const sendCourseMessage = require("../producer/courseEnrollerProducer");
+const mqConnection = require("../config/rabbitmq");
+const courseDescription = require("../utils/huggingFace");
 
 exports.registerCourse = async (req, res, next) => {
   const { courseName, faculties } = req.body;
   const facultiesArr = JSON.parse(faculties);
+  //description = await courseDescription(courseName);
 
   // TODO: Input validation here
   const teacherId = req.user.userId;
@@ -20,11 +22,10 @@ exports.registerCourse = async (req, res, next) => {
         .json({ message: "Course name and faculties are required." });
     }
 
-    // Handle file uploads
     if (req.files && req.files.length > 0) {
       const filesData = req.files.map((file) => ({
         fileName: file.originalname,
-        filePath: `/uploads/${file.filename}`,
+        filePath: path.resolve(__dirname, `../../uploads/${file.filename}`),
       }));
 
       const insertedFile = await File.insertMany(filesData);
@@ -36,12 +37,20 @@ exports.registerCourse = async (req, res, next) => {
       };
       const createBatch = new Batch({
         faculty: facultiesArr,
-
         subject,
         files: fileIdArray,
       });
       const savedBatch = await createBatch.save();
-      await sendCourseMessage({ facultiesArr, id: savedBatch._id });
+      await mqConnection.sendToQueue("course", {
+        facultiesArr,
+        id: savedBatch._id,
+      });
+      insertedFile.forEach((file) => {
+        mqConnection.sendToQueue("pdf", {
+          pdfPath: file.filePath,
+          pdfId: file._id,
+        });
+      });
     }
 
     sendSuccessResponse(
@@ -85,29 +94,3 @@ exports.getAppropriateSemesters = async (req, res, next) => {
     next(err);
   }
 };
-
-// exports.uploadFile = async (req, res, next) => {
-//   try {
-//     if (!req.files || req.files.length === 0) {
-//       return res.status(400).json({ message: "No files uploaded." });
-//     }
-
-//     const filesData = req.files.map((file) => ({
-//       fileName: file.originalname,
-//       filePath: `/uploads/${file.filename}`,
-//     }));
-
-//     const savedFiles = await File.insertMany(filesData);
-
-//     // TODO: Use message queue to offload the syncing task to worker process
-//     sendSuccessResponse(
-//       res,
-//       200,
-//       "",
-//       "Upload Sucess",
-//       "Files uploaded successfully "
-//     );
-//   } catch (err) {
-//     next(err);
-//   }
-// };

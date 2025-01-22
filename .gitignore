@@ -1,3 +1,4 @@
 node_modules/
 .env
 uploads/
+http_ca.crt

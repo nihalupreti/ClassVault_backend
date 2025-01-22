@@ -1,25 +1,56 @@
 const calcCurrentSem = (enrolledYear, enrolledIntake) => {
   const date = new Date();
   const currentYear = date.getFullYear();
-  const currentMnt = date.getMonth() + 1;
+  const currentMonth = date.getMonth() + 1;
 
-  let semester = 1;
-  let tempSeason = enrolledIntake;
+  if (enrolledIntake !== "spring" && enrolledIntake !== "fall") {
+    throw new Error("Invalid enrolledIntake value.");
+  }
 
-  const currentSeason = currentMnt >= 3 && currentMnt <= 8 ? "fall" : "spring";
+  const isCurrentSpring = currentMonth >= 1 && currentMonth <= 6;
+  const isCurrentFall = currentMonth >= 7 && currentMonth <= 12;
 
-  while (enrolledYear < currentYear || tempSeason !== currentSeason) {
-    semester++;
+  let totalSemesters = 0;
 
-    if (tempSeason === "fall") {
-      tempSeason = "spring";
+  if (enrolledYear === 2020 && enrolledIntake === "fall") {
+    totalSemesters = 7;
+  } else if (enrolledYear === 2021 && enrolledIntake === "spring") {
+    totalSemesters = 6;
+  } else if (enrolledYear === 2021 && enrolledIntake === "fall") {
+    totalSemesters = 5;
+  } else {
+    if (currentYear === enrolledYear) {
+      if (enrolledIntake === "spring") {
+        totalSemesters = isCurrentSpring ? 1 : 2;
+      } else {
+        // fall intake
+        totalSemesters = isCurrentFall ? 1 : 0; // 0 if trying to calculate before fall starts
+      }
     } else {
-      tempSeason = "fall";
-      enrolledYear++;
+      const yearDiff = currentYear - enrolledYear;
+
+      if (enrolledIntake === "spring") {
+        totalSemesters = yearDiff * 2;
+        if (isCurrentSpring) {
+          totalSemesters -= 1;
+        }
+      } else {
+        // fall intake
+        totalSemesters = yearDiff * 2 - 1; //second half of the year
+        if (isCurrentSpring) {
+          totalSemesters -= 1;
+        }
+      }
     }
   }
 
-  return semester;
+  return Math.max(0, Math.min(8, totalSemesters));
 };
+
+// console.log(calcCurrentSem(2021, "spring"));
+// console.log(calcCurrentSem(2022, "spring"));
+// console.log(calcCurrentSem(2022, "fall"));
+// console.log(calcCurrentSem(2020, "spring"));
+// console.log(calcCurrentSem(2020, "fall"));
 
 module.exports = calcCurrentSem;
