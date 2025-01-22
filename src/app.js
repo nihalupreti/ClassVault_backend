@@ -27,6 +27,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/teacher", teacherRoutes);
 
 app.use("/api/group", groupRoutes);
+console.log("Assignment router loaded");
 app.use("/api/assignments", assignmentRoutes);
 
 

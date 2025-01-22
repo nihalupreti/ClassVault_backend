@@ -4,11 +4,9 @@ const assignmentSchema = new mongoose.Schema(
     {
         student_id: { type: String, required: true },
         assignment_title: { type: String, required: true },
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "File",
-            required: true,
-        },
+        files: [
+            { type: mongoose.Schema.Types.ObjectId, ref: "File", required: true },
+        ],
         submitted_at: { type: Date, required: true },
         grade: {
             score: { type: Number, default: null },

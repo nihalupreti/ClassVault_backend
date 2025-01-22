@@ -5,16 +5,15 @@ const upload = require("../utils/multerConfig");
 
 const router = express.Router();
 
-// uploading by student
-router.post("/upload", auth, upload.array('assignmentFiles'), uploadAssignment);
+// router.get("/no-pain", (req, res) => {
+//     res.status(200).send("no-gain");
+// });
 
-// grading by teacher
+router.post("/upload", auth, upload.array("assignmentFiles"), uploadAssignment);
 router.post("/grade", auth, gradeAssignment);
-
-//fetching all assignments for student
-router.get("/:student_id", auth, getStudentAssignments);
-
-// fetching for teacher
+router.get("/student/:student_id", auth, getStudentAssignments);
 router.get("/", auth, getAllAssignments);
+
+
 
 module.exports = router;
