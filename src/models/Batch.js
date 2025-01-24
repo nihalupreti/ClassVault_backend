@@ -6,6 +6,7 @@ const batchSchema = mongoose.Schema(
       type: [{ type: String, ref: "Semester" }], //eg: BCA-1-MRG, BCE-6-DAY. TODO: regex validation
       require: true,
     },
+    imageUrl: { type: String },
     description: { type: String },
     subject: {
       courseName: { type: String, ref: "Subject" },

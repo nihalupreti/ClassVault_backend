@@ -146,6 +146,7 @@ exports.getUserCourses = async (req, res, next) => {
           teacherName: teacher.fullName,
           id: batch?._id || "No id found",
           updatedAt: formatDate(batch.updatedAt),
+          imageUrl: batch.imageUrl,
         }));
       }
     } else if (role === "student") {
@@ -165,6 +166,7 @@ exports.getUserCourses = async (req, res, next) => {
             batch.subject?.teacher?.fullName || "No teacher name available",
           id: batch?._id || "No id found",
           updatedAt: formatDate(batch.updatedAt),
+          imageUrl: batch.imageUrl,
         }));
       }
     }
