@@ -12,6 +12,8 @@ const User = require("../models/User");
 const formatDate = require("../utils/formatDate");
 const elasticClient = require("../config/elasticSearch");
 const highlightExcerpt = require("../utils/highlightDescription");
+const { sendEmail } = require("../services/notification");
+const { verifyJwt } = require("../utils/jwt");
 
 const userModels = {
   student: StudentUser,
@@ -99,7 +101,6 @@ exports.signupUser = async (req, res, next) => {
     }
 
     await newUser.save();
-    console.log(newUser);
     const encryptedToken = signJwt({ userId: newUser._id, role: newUser.role });
     setCookie(res, encryptedToken);
 
@@ -122,6 +123,17 @@ exports.signupUser = async (req, res, next) => {
       { role: newUser.role, fullName: newUser.fullName },
       "User created successfully."
     );
+    sendEmail({
+      emailType: "SEND_CONFIRMATION_EMAIL",
+      emailData: {
+        recipientName: newUser.fullName,
+        recipientEmail: newUser.email,
+        confirmationLink: `http://localhost:3000/api/user/confirm?token=${signJwt(
+          { userId: newUser._id },
+          "15m"
+        )}`,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -261,5 +273,20 @@ exports.search = async (req, res, next) => {
     res.status(500).json({
       error: "An error occurred while processing the search request.",
     });
+  }
+};
+
+exports.confirm = async (req, res, next) => {
+  const { token } = req.query;
+  try {
+    const decoded = verifyJwt(token);
+    await db.users.update(
+      { verified: true },
+      { where: { id: decoded.userId } }
+    );
+
+    res.send("Email confirmed successfully!");
+  } catch (error) {
+    res.status(400).send("Invalid or expired token");
   }
 };

@@ -21,6 +21,7 @@ const userSchema = mongoose.Schema({
   groups: {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
   },
+  verified: { type: Boolean, default: false },
 });
 
 const User = mongoose.model("User", userSchema);

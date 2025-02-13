@@ -4,6 +4,7 @@ const Semester = require("../models/Semester");
 const sendSuccessResponse = require("../utils/response");
 const mqConnection = require("../config/rabbitmq");
 const fetchImageUrl = require("../utils/unsplash");
+const { sendEmailToMultipleUser } = require("../services/notification");
 
 exports.registerCourse = async (req, res, next) => {
   const { courseName, faculties } = req.body;
@@ -103,6 +104,11 @@ exports.updateBatch = async (req, res, next) => {
     res.status(200).json({
       message: "Batch updated successfully",
       batch: updatedBatch,
+    });
+    sendEmailToMultipleUser({
+      BatchId: updatedBatch._id,
+      emailType: "SEND_COURSE_EMAIL",
+      purpose: "update",
     });
   } catch (error) {
     console.error("Error updating batch:", error);
