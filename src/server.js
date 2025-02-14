@@ -1,13 +1,25 @@
 const httpServer = require("http");
 const { Server } = require("socket.io");
-const cors = require("cors");
 const app = require("./app");
 const connectDB = require("./config/dbConnection");
-const consumeLoginMessages = require("./consumer/enrollerWorker");
+const mqConnection = require("./config/rabbitmq");
+const processPdf = require("./services/processPdf");
+const enrollService = require("./services/enrollService");
 const socketHandler = require("./socket.io");
 
+async function startConsumers() {
+  try {
+    await mqConnection.consume(enrollService, "course");
+    await mqConnection.consume(processPdf, "pdf");
+
+    console.log("Consumers started and listening to queues...");
+  } catch (error) {
+    console.error("Error starting consumers:", error);
+  }
+}
+
 connectDB();
-consumeLoginMessages();
+startConsumers();
 
 const server = httpServer.createServer(app);
 const io = new Server(server, {

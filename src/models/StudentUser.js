@@ -23,7 +23,7 @@ const studentUserSchema = new mongoose.Schema({
   semNumber: { type: Number, min: 1, max: 8, required: true },
   faculty: {
     type: String,
-    enum: ["BCE", "BCA"], //TODO: More faculty to add
+    //enum: ["BCE", "BCA"], //TODO: More faculty to add
     required: true,
   },
 
@@ -32,7 +32,7 @@ const studentUserSchema = new mongoose.Schema({
 
 studentUserSchema.pre("validate", function (next) {
   if (this.enrolledIn && this.enrolledIntake && this.faculty && this.timing) {
-    this.semNumber = 2; //calcCurrentSem(this.enrolledIn, this.enrolledIntake); TODO:calculated sem properly
+    this.semNumber = calcCurrentSem(this.enrolledIn, this.enrolledIntake);
     this.studentCode =
       `${this.faculty}-${this.semNumber}-${this.timing}`.toUpperCase();
     this.studentCodeGeneral = `${this.faculty}-${this.semNumber}`.toUpperCase();

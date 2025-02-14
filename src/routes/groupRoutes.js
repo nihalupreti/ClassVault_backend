@@ -5,6 +5,7 @@ const {
   getGroup,
   joinGroup,
   hasUserJoined,
+  getGroupMessage,
 } = require("../controllers/groupController");
 const auth = require("../middlewares/auth");
 
@@ -14,5 +15,6 @@ router.post("/register", auth, createGroup);
 router.get("/", auth, getGroup);
 router.post("/join", auth, joinGroup);
 router.get("/:id", auth, hasUserJoined);
+router.get("/message/:groupId", auth, getGroupMessage);
 
 module.exports = router;

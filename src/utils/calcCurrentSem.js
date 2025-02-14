@@ -3,18 +3,14 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
   const currentYear = date.getFullYear();
   const currentMonth = date.getMonth() + 1;
 
-
   if (enrolledIntake !== "spring" && enrolledIntake !== "fall") {
     throw new Error("Invalid enrolledIntake value.");
   }
 
-
   const isCurrentSpring = currentMonth >= 1 && currentMonth <= 6;
   const isCurrentFall = currentMonth >= 7 && currentMonth <= 12;
 
-
   let totalSemesters = 0;
-
 
   if (enrolledYear === 2020 && enrolledIntake === "fall") {
     totalSemesters = 7;
@@ -23,16 +19,14 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
   } else if (enrolledYear === 2021 && enrolledIntake === "fall") {
     totalSemesters = 5;
   } else {
-
     if (currentYear === enrolledYear) {
-
       if (enrolledIntake === "spring") {
         totalSemesters = isCurrentSpring ? 1 : 2;
-      } else { // fall intake
+      } else {
+        // fall intake
         totalSemesters = isCurrentFall ? 1 : 0; // 0 if trying to calculate before fall starts
       }
     } else {
-
       const yearDiff = currentYear - enrolledYear;
 
       if (enrolledIntake === "spring") {
@@ -40,8 +34,9 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
         if (isCurrentSpring) {
           totalSemesters -= 1;
         }
-      } else { // fall intake
-        totalSemesters = (yearDiff * 2) - 1; //second half of the year
+      } else {
+        // fall intake
+        totalSemesters = yearDiff * 2 - 1; //second half of the year
         if (isCurrentSpring) {
           totalSemesters -= 1;
         }
@@ -49,9 +44,14 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
     }
   }
 
-
   return Math.max(0, Math.min(8, totalSemesters));
 };
+
+// console.log(calcCurrentSem(2021, "spring"));
+// console.log(calcCurrentSem(2022, "spring"));
+// console.log(calcCurrentSem(2022, "fall"));
+// console.log(calcCurrentSem(2020, "spring"));
+// console.log(calcCurrentSem(2020, "fall"));
 
 module.exports = calcCurrentSem;
 

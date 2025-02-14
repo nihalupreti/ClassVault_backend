@@ -1,4 +1,5 @@
 const Group = require("../models/Group");
+const GroupMessage = require("../models/GroupMessage");
 const StudentUser = require("../models/StudentUser");
 const TeacherUser = require("../models/TeacherUser");
 const sendSuccessResponse = require("../utils/response");
@@ -79,4 +80,28 @@ exports.hasUserJoined = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+exports.getGroupMessage = async (req, res, next) => {
+  const { groupId } = req.params;
+  const messages = await GroupMessage.find({ group: groupId }).populate(
+    "user",
+    "fullName"
+  );
+  const response = messages.map((msg) => {
+    const date = new Date(msg.createdAt);
+    const formattedTime = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    return {
+      sender: msg.user.fullName,
+      message: msg.message,
+      time: formattedTime,
+    };
+  });
+  sendSuccessResponse(res, 200, response, "messages..");
 };
