@@ -65,12 +65,7 @@ async function processPDFToJSON({ pdfPath, pdfId }) {
 
     return pages;
   } catch (error) {
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      meta: error.meta?.body?.error,
-    });
-    throw error;
+    console.error("elastic error");
   }
 }
 

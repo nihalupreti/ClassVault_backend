@@ -23,7 +23,6 @@ const handleFileUpload = async (req, res, next) => {
 
       next();
     } else {
-      // If no files are uploaded, initialize `req.fileIds` as an empty array
       req.fileIds = [];
       next();
     }

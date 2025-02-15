@@ -1,5 +1,5 @@
 const StudentUser = require("../models/StudentUser");
-const sendEmailToMultipleUser = require("../services/notification");
+const { sendEmailToMultipleUser } = require("../services/notification");
 
 const processStudent = async (userData) => {
   try {

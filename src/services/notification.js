@@ -20,10 +20,10 @@ const sendEmailToMultipleUser = async ({ BatchId, emailType }) => {
       .populate({
         path: "batchEnrolled",
         select: "subject",
-      })
-      .populate({
-        path: "batchEnrolled.subject.teacher",
-        select: "fullName",
+        populate: {
+          path: "subject.teacher",
+          select: "fullName",
+        },
       });
 
     console.log(`Found ${allUsers.length} users to send emails.`);
@@ -33,18 +33,17 @@ const sendEmailToMultipleUser = async ({ BatchId, emailType }) => {
       const batch = allUsers.slice(i, i + batchSize);
       await Promise.all(
         batch.map(async (user) => {
-          // Loop over the subjects if there are multiple
-          for (const subject of user.batchEnrolled.subject) {
-            await sendEmail({
-              emailType,
-              emailData: {
-                recipientName: user.fullName,
-                recipientEmail: user.email,
-                teacherName: subject.teacher.fullName,
-                courseTitle: subject.courseName,
-              },
-            });
-          }
+          const subject = user.batchEnrolled[0].subject;
+
+          await sendEmail({
+            emailType,
+            emailData: {
+              recipientName: user.fullName,
+              recipientEmail: user.email,
+              teacherName: subject.teacher.fullName,
+              courseTitle: subject.courseName,
+            },
+          });
         })
       );
       console.log(`Batch of ${batchSize} emails sent.`);

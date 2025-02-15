@@ -47,23 +47,4 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
   return Math.max(0, Math.min(8, totalSemesters));
 };
 
-// console.log(calcCurrentSem(2021, "spring"));
-// console.log(calcCurrentSem(2022, "spring"));
-// console.log(calcCurrentSem(2022, "fall"));
-// console.log(calcCurrentSem(2020, "spring"));
-// console.log(calcCurrentSem(2020, "fall"));
-
 module.exports = calcCurrentSem;
-
-// // Test Cases
-// try {
-//   console.log("Test 1 (2021, spring):", calcCurrentSem(2021, "spring")); // Expected: 6 (Pandemic Adjusted)
-//   console.log("Test 2 (2021, fall):", calcCurrentSem(2021, "fall"));     // Expected: 5 (Pandemic Adjusted)
-//   console.log("Test 3 (2023, spring):", calcCurrentSem(2023, "spring")); // Expected: 4
-//   console.log("Test 4 (2023, fall):", calcCurrentSem(2023, "fall"));     // Expected: 3
-//   console.log("Test 5 (2025, spring):", calcCurrentSem(2025, "spring")); // Expected: 1
-//   console.log("Test 6 (2025, fall):", calcCurrentSem(2025, "fall"));     // Expected: 0 - hasn't started yet
-//   console.log("Test 7 (2020, fall):", calcCurrentSem(2020, "fall"));     // Expected: 7 (Pandemic Adjusted)
-// } catch (error) {
-//   console.error("Error:", error.message);
-// }
