@@ -43,7 +43,7 @@ const calcCurrentSem = (enrolledYear, enrolledIntake) => {
       }
     }
   }
-
+  console.log("called");
   return Math.max(0, Math.min(8, totalSemesters));
 };
 

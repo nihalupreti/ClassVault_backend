@@ -26,6 +26,10 @@ class BaseEmail {
       console.error(`${this.name}_ERROR`, err);
     }
   }
+
+  emailBody() {
+    return {};
+  }
 }
 
 module.exports = BaseEmail;

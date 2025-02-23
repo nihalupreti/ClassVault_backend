@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { encryptToken, decryptToken } = require("./crypto");
+const ApiError = require("./customError");
 
 const signJwt = (json, expiresIn = "1h") => {
   const jwtToken = jwt.sign(json, process.env.JWT_SECRET, {

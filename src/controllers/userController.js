@@ -15,7 +15,6 @@ const highlightExcerpt = require("../utils/highlightDescription");
 const { sendEmail } = require("../services/notification");
 const { verifyJwt } = require("../utils/jwt");
 
-
 const userModels = {
   student: StudentUser,
   teacher: TeacherUser,
@@ -78,9 +77,6 @@ exports.signupUser = async (req, res, next) => {
 
     let newUser;
     if (req.userType === "student") {
-
-      const currentSemester = calcCurrentSem(inputBody.enrolledIn, inputBody.enrolledIntake);
-
       newUser = new StudentUser({
         fullName: inputBody.fullName,
         enrolledIn: inputBody.enrolledIn,
@@ -89,10 +85,8 @@ exports.signupUser = async (req, res, next) => {
         password: hashedPassword,
         enrolledIntake: inputBody.enrolledIntake,
         timing: inputBody.timing,
-        currentSemester: currentSemester, //sem calculation
       });
-    }
-    else if (req.userType === "teacher") {
+    } else if (req.userType === "teacher") {
       newUser = new TeacherUser({
         fullName: inputBody.fullName,
         email: inputBody.email,
@@ -134,7 +128,7 @@ exports.signupUser = async (req, res, next) => {
       emailData: {
         recipientName: newUser.fullName,
         recipientEmail: newUser.email,
-        confirmationLink: `http://localhost:3000/api/user/confirm?token=${signJwt(
+        confirmationLink: `http://localhost:5173/user/confirm?token=${signJwt(
           { userId: newUser._id },
           "15m"
         )}`,
@@ -205,6 +199,7 @@ exports.getUserInfo = async (req, res, next) => {
     fullName: user.fullName,
     role: user.role,
     groups: user.groups,
+    verified: user.verified,
   });
 };
 
@@ -286,13 +281,13 @@ exports.confirm = async (req, res, next) => {
   const { token } = req.query;
   try {
     const decoded = verifyJwt(token);
-    await db.users.update(
-      { verified: true },
-      { where: { id: decoded.userId } }
-    );
 
-    res.send("Email confirmed successfully!");
+    // Using Mongoose to update the user
+    await User.findByIdAndUpdate(decoded.userId, { verified: true });
+
+    res.json({ message: "Email confirmed successfully!" });
   } catch (error) {
-    res.status(400).send("Invalid or expired token");
+    console.error("Verification error:", error);
+    res.status(400).json({ message: "Invalid or expired token" });
   }
 };

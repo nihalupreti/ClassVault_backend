@@ -28,6 +28,6 @@ router.post(
   uploadAssignmentByStudent
 );
 router.get("/course/:id", auth, getStudentAssignments);
-router.get("/", auth, getAllAssignments);
+router.get("/:id", auth, getAllAssignments);
 
 module.exports = router;

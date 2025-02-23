@@ -4,14 +4,20 @@ const emailClasses = {
   SEND_COURSE_EMAIL: require("../email/courseEmail"),
 };
 
-const sendEmail = async ({ emailType, emailData }) => {
+const sendEmail = async ({ emailType, emailData, ...extra }) => {
+  console.log(emailData);
   const EmailClass = emailClasses[emailType];
-  const emailInstance = new EmailClass(emailData);
+  const emailInstance = new EmailClass(emailData, extra);
   emailInstance.sendEmail();
-  console.log("successfully sent email");
+  console.log("Successfully sent email");
 };
 
-const sendEmailToMultipleUser = async ({ BatchId, emailType }) => {
+const sendEmailToMultipleUser = async ({
+  BatchId,
+  emailType,
+  purpose,
+  extra = null,
+}) => {
   try {
     const allUsers = await StudentUser.find({
       batchEnrolled: { $in: [BatchId] },
@@ -42,6 +48,13 @@ const sendEmailToMultipleUser = async ({ BatchId, emailType }) => {
               recipientEmail: user.email,
               teacherName: subject.teacher.fullName,
               courseTitle: subject.courseName,
+              purpose: purpose,
+              ...(purpose === "assignment" && extra
+                ? {
+                    assignmentTitle: extra.assignmentTitle,
+                    dueDate: extra.dueDate,
+                  }
+                : {}),
             },
           });
         })

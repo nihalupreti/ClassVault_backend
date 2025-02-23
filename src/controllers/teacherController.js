@@ -37,10 +37,22 @@ exports.registerCourse = async (req, res, next) => {
     });
 
     const savedBatch = await createBatch.save();
+    const populatedBatch = await savedBatch.populate("files");
+    const filesData = populatedBatch.files.map((file) => ({
+      filePath: file.filePath,
+      fileId: file._id,
+    }));
 
     await mqConnection.sendToQueue("course", {
       facultiesArr,
       id: savedBatch._id,
+    });
+
+    filesData.forEach((file) => {
+      mqConnection.sendToQueue("pdfExtract", {
+        pdfId: file.fileId,
+        pdfPath: file.filePath,
+      });
     });
 
     sendSuccessResponse(

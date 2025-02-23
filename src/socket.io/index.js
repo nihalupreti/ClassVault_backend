@@ -1,5 +1,6 @@
 const messageHandler = require("./message");
 const roomHandler = require("./room");
+const summaryHandler = require("./summary");
 const { verifyJwt } = require("../utils/jwt");
 const cookie = require("cookie");
 
@@ -13,6 +14,7 @@ module.exports = (io) => {
     // Load event handlers
     messageHandler(io, socket);
     roomHandler(io, socket);
+    summaryHandler(io, socket);
 
     socket.on("disconnect", () => {
       console.log("A user disconnected:", socket.id);

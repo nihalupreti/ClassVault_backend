@@ -11,17 +11,19 @@ const handleFileUpload = async (req, res, next) => {
       }));
 
       const insertedFiles = await File.insertMany(filesData);
-
       req.fileIds = insertedFiles.map((doc) => doc._id);
 
-      insertedFiles.forEach((file) => {
-        mqConnection.sendToQueue("pdf", {
-          pdfPath: file.filePath,
-          pdfId: file._id,
+      // Process the queue asynchronously after response flow continues
+      setImmediate(() => {
+        insertedFiles.forEach((file) => {
+          mqConnection.sendToQueue("pdf", {
+            pdfPath: file.filePath,
+            pdfId: file._id,
+          });
         });
       });
-
-      next();
+      console.log("called");
+      next(); // Continue request flow immediately
     } else {
       req.fileIds = [];
       next();

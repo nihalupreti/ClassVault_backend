@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const calcCurrentSem = require("../utils/calcCurrentSem");
+console.log("calcCurrentSem loaded:", calcCurrentSem);
 const User = require("./User");
 
 const studentUserSchema = new mongoose.Schema({

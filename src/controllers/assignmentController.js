@@ -2,26 +2,69 @@ const Assignment = require("../models/Assignment");
 const StudentUser = require("../models/StudentUser");
 const sendSuccessResponse = require("../utils/response");
 const AssignmentSubmit = require("../models/AssignmentSubmit");
+const { sendEmailToMultipleUser } = require("../services/notification");
 
 exports.uploadAssignmentByStudent = async (req, res, next) => {
-  const { id: assignment } = req.params;
+  const { id } = req.params;
   const studentId = req.user.userId;
-  try {
-    const fileIdArr = req.fileIds;
 
+  try {
+    // Validate if assignment exists
+    const assignment = await Assignment.findById(id);
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    // Prepare update data
+    const updateData = {
+      files: req.fileIds, // Ensure req.fileIds is populated correctly
+      status: assignment.grading === "auto" ? "graded" : "submitted",
+      updatedAt: new Date(),
+    };
+
+    // Add grade if auto grading
+    if (assignment.grading === "auto") {
+      updateData.grade = {
+        score: assignment.mark, // Use mark from assignment to set score in submission
+        feedback: null,
+      };
+    }
+
+    // Check if submission is after due date and apply late penalty if configured
+    if (assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
+      if (assignment.percentCutoff && assignment.grading === "auto") {
+        const penaltyAmount =
+          (assignment.mark * assignment.percentCutoff) / 100; // Apply penalty to mark
+        updateData.grade.score = Math.max(0, assignment.mark - penaltyAmount); // Update score after penalty
+        updateData.isLate = true;
+      }
+    }
+
+    // Update or create assignment submission
     const studentAssignment = await AssignmentSubmit.findOneAndUpdate(
-      { student: studentId, assignment },
-      { $set: { files: fileIdArr, status: "submitted" } }
+      {
+        student: studentId,
+        assignment: id,
+      },
+      { $set: updateData },
+      { new: true, upsert: true } // This ensures the document is created if it doesn't exist
     );
+
+    if (!studentAssignment) {
+      return res.status(404).json({
+        message: "Assignment submission not found or failed to update",
+      });
+    }
 
     sendSuccessResponse(
       res,
       200,
       studentAssignment,
-      "Assignment uploaded successfully."
+      "Assignment uploaded successfully"
     );
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    console.error("Error uploading assignment:", error);
+    next(error);
   }
 };
 
@@ -67,6 +110,15 @@ exports.uploadAssignment = async (req, res, next) => {
 
     await AssignmentSubmit.insertMany(submissions);
 
+    sendEmailToMultipleUser({
+      BatchId: newAssignment.course,
+      emailType: "SEND_COURSE_EMAIL",
+      purpose: "assignment",
+      extra: {
+        assignmentTitle: newAssignment.assignment_title,
+        dueDate: newAssignment.dueDate,
+      },
+    });
     sendSuccessResponse(
       res,
       200,
@@ -82,27 +134,25 @@ exports.getStudentAssignments = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Get all assignment submissions for the given assignment ID
     const assignments = await AssignmentSubmit.find({
       assignment: id,
     })
-      .populate("assignment", "assignment_title dueDate grading") // Populate assignment fields
+      .populate("assignment", "assignment_title dueDate grading files")
       .populate("student", "fullName");
 
-    // Get the assignment details, including the course
     const assignmentDetails = await Assignment.findById(id)
       .select("assignment_title course dueDate mark grading")
-      .populate("course", "subject.courseName"); // Populate course with courseName
+      .populate("course", "subject.courseName");
 
-    // Format the output
     const formattedResponse = {
       id: assignmentDetails._id,
       title: assignmentDetails.assignment_title,
-      chapter: assignmentDetails.course.subject.courseName, // Corrected to access courseName
+      chapter: assignmentDetails.course.subject.courseName,
       dueDate: assignmentDetails.dueDate,
       totalPoints: assignmentDetails.mark,
-      gradingType: assignmentDetails.grading, // 'manual' or 'auto'
+      gradingType: assignmentDetails.grading,
       submissions: assignments.map((submission) => ({
+        fileId: submission.files[0],
         id: submission._id,
         studentName: submission.student.fullName,
         submittedAt: submission.createdAt,
@@ -167,6 +217,7 @@ exports.gradeAssignment = async (req, res, next) => {
 exports.getAllAssignments = async (req, res, next) => {
   try {
     const userId = req.user.userId;
+    const { id } = req.params;
     let assignments = [];
     const selectFields =
       "teacher assignment_title files createdAt course dueDate";
@@ -177,24 +228,30 @@ exports.getAllAssignments = async (req, res, next) => {
     ];
 
     if (req.user.role === "admin") {
-      assignments = await Assignment.find({ teacher: userId })
+      assignments = await Assignment.find({ teacher: userId, course: id })
         .select(selectFields)
         .populate(commonPopulate);
     } else if (req.user.role === "student") {
       assignments = await AssignmentSubmit.find({ student: userId })
-        .select("assignment status")
-        .populate("assignment", selectFields)
-        .populate({ path: "assignment", populate: commonPopulate });
+        .select("assignment status grade")
+        .populate({
+          path: "assignment",
+          match: { course: id }, // Filter by course ID
+          select: selectFields,
+          populate: commonPopulate,
+        });
 
-      assignments = assignments.map((submission) => {
-        const { assignment, status } = submission; // Destructure the assignment and status
-
-        // Flatten the assignment object and add the status at the root
-        return {
-          ...assignment.toObject(),
-          status,
-        };
-      });
+      assignments = assignments
+        .filter((submission) => submission.assignment) // Remove null assignments
+        .map((submission) => {
+          const { assignment, status, grade } = submission;
+          const gradeScore = grade && grade.length > 0 ? grade[0].score : null; // Assuming grade is an array, and we want the score from the first item
+          return {
+            ...assignment.toObject(), // Safe now
+            status,
+            grade: grade.score, // Add the grade to the response
+          };
+        });
     }
 
     sendSuccessResponse(
